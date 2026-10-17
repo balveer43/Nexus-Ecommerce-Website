@@ -1,10 +1,14 @@
 /**
  * ==========================================================================
  * NEXUS E-COMMERCE APPLICATION JAVASCRIPT (MODERN 2026 EDITION)
- * Features:
+ * Enhanced with Advanced UI/UX:
+ * - Dynamic Currency Switcher (USD $ / INR ₹)
+ * - Canvas Confetti Celebration FX
+ * - Interactive 3D Perspective Card Tilt
+ * - Web Audio API Synthetic Micro-Interactions (Sound FX)
  * - Real-Time Search & Multi-Level Filtering
  * - Voice Search via Web Speech API
- * - AI Shopping Assistant Chatbot (Context-aware recommendations)
+ * - AI Shopping Assistant Chatbot
  * - Live Flash Sale Countdown Ticker
  * - Product Comparison System (Side-by-side matrix)
  * - Recently Viewed Browsing History Shelf
@@ -12,11 +16,13 @@
  * - Promo Code Engine (SAVE20, SAVE10, FREESHIP)
  * - Quick View Modal with Color Swatches & Specs
  * - Simulated Checkout Flow & Printable Invoice
- * - Dark & Light Mode Theme Switcher (localStorage)
+ * - Dark & Light Mode Theme Switcher
  * - Floating Back-To-Top Control
  * - Responsive Toast Notification Engine
  * ==========================================================================
  */
+
+const USD_TO_INR = 85;
 
 // ----------------- APPLICATION STATE -----------------
 const state = {
@@ -25,6 +31,8 @@ const state = {
   wishlist: JSON.parse(localStorage.getItem("nexus_wishlist")) || [],
   compare: JSON.parse(localStorage.getItem("nexus_compare")) || [],
   recentlyViewed: JSON.parse(localStorage.getItem("nexus_recent")) || [],
+  currency: localStorage.getItem("nexus_currency") || "INR",
+  soundEnabled: localStorage.getItem("nexus_sound") !== "false",
   activeCategory: "All",
   searchQuery: "",
   sortBy: "default",
@@ -42,8 +50,12 @@ const VALID_PROMOS = {
 
 // ----------------- DOM ELEMENTS -----------------
 const elements = {
-  // Theme
+  // Theme & FX
   themeToggleBtn: document.getElementById("themeToggleBtn"),
+  currencyToggleBtn: document.getElementById("currencyToggleBtn"),
+  currentCurrencyLabel: document.getElementById("currentCurrencyLabel"),
+  soundToggleBtn: document.getElementById("soundToggleBtn"),
+  confettiCanvas: document.getElementById("confettiCanvas"),
   
   // Navigation & Badges
   cartHeaderBtn: document.getElementById("cartHeaderBtn"),
@@ -156,9 +168,189 @@ const elements = {
   toastContainer: document.getElementById("toastContainer")
 };
 
+// ----------------- CURRENCY FORMATTING (USD / INR) -----------------
+function formatPrice(amountInUSD) {
+  if (state.currency === "INR") {
+    const inr = Math.round(amountInUSD * USD_TO_INR);
+    return `₹${inr.toLocaleString("en-IN")}`;
+  }
+  return `$${amountInUSD.toFixed(2)}`;
+}
+
+function toggleCurrency() {
+  state.currency = state.currency === "INR" ? "USD" : "INR";
+  localStorage.setItem("nexus_currency", state.currency);
+  updateCurrencyUI();
+  renderProducts();
+  updateCartUI();
+  renderRecentlyViewed();
+  playPopSound();
+  showToast(`Switched currency to ${state.currency === "INR" ? "₹ Indian Rupee (INR)" : "$ US Dollar (USD)"}`, "info");
+}
+
+function updateCurrencyUI() {
+  if (elements.currentCurrencyLabel) {
+    elements.currentCurrencyLabel.textContent = state.currency === "INR" ? "₹ INR" : "$ USD";
+  }
+}
+
+// ----------------- SOUND EFFECTS (WEB AUDIO API) -----------------
+let audioCtx = null;
+
+function getAudioContext() {
+  if (!audioCtx) {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (AudioContext) audioCtx = new AudioContext();
+  }
+  if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
+function playPopSound() {
+  if (!state.soundEnabled) return;
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(520, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(840, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.08);
+  } catch (e) {}
+}
+
+function playChimeSound() {
+  if (!state.soundEnabled) return;
+  try {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    [587.33, 880, 1174.66].forEach((freq, idx) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.06);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime + idx * 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.06 + 0.25);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(ctx.currentTime + idx * 0.06);
+      osc.stop(ctx.currentTime + idx * 0.06 + 0.25);
+    });
+  } catch (e) {}
+}
+
+function toggleSound() {
+  state.soundEnabled = !state.soundEnabled;
+  localStorage.setItem("nexus_sound", state.soundEnabled);
+  updateSoundUI();
+  if (state.soundEnabled) playPopSound();
+  showToast(state.soundEnabled ? "UI sound effects enabled" : "UI sound effects muted", "info");
+}
+
+function updateSoundUI() {
+  if (!elements.soundToggleBtn) return;
+  const icon = elements.soundToggleBtn.querySelector("i");
+  if (state.soundEnabled) {
+    icon.className = "fa-solid fa-volume-high";
+    elements.soundToggleBtn.title = "Mute UI Sound Effects";
+  } else {
+    icon.className = "fa-solid fa-volume-xmark";
+    elements.soundToggleBtn.title = "Enable UI Sound Effects";
+  }
+}
+
+// ----------------- CANVAS CONFETTI CELEBRATION -----------------
+function launchConfetti() {
+  const canvas = elements.confettiCanvas;
+  if (!canvas) return;
+
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const pieces = [];
+  const colors = ["#4f46e5", "#f43f5e", "#10b981", "#fbbf24", "#8b5cf6", "#06b6d4"];
+
+  for (let i = 0; i < 90; i++) {
+    pieces.push({
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      vx: (Math.random() - 0.5) * 16,
+      vy: (Math.random() - 0.8) * 16,
+      size: Math.random() * 8 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      rSpeed: (Math.random() - 0.5) * 10,
+      alpha: 1
+    });
+  }
+
+  playChimeSound();
+
+  let animFrame;
+  function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let active = false;
+
+    pieces.forEach(p => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.35; // gravity
+      p.rotation += p.rSpeed;
+      p.alpha -= 0.012;
+
+      if (p.alpha > 0) {
+        active = true;
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate((p.rotation * Math.PI) / 180);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.7);
+        ctx.restore();
+      }
+    });
+
+    if (active) {
+      animFrame = requestAnimationFrame(render);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      cancelAnimationFrame(animFrame);
+    }
+  }
+
+  render();
+}
+
+// ----------------- 3D CARD PERSPECTIVE TILT -----------------
+function setup3DCardTilt() {
+  document.querySelectorAll(".product-card").forEach(card => {
+    card.addEventListener("mousemove", (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      const tiltX = (y / (rect.height / 2)) * -6;
+      const tiltY = (x / (rect.width / 2)) * 6;
+      card.style.transform = `perspective(1000px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) translateY(-5px)`;
+    });
+
+    card.addEventListener("mouseleave", () => {
+      card.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)";
+    });
+  });
+}
+
 // ----------------- INITIALIZATION -----------------
 function initApp() {
   applyTheme(state.theme);
+  updateCurrencyUI();
+  updateSoundUI();
   setupEventListeners();
   renderProducts();
   updateWishlistUI();
@@ -188,12 +380,12 @@ function applyTheme(theme) {
 function toggleTheme() {
   const newTheme = state.theme === "dark" ? "light" : "dark";
   applyTheme(newTheme);
+  playPopSound();
   showToast(`Switched to ${newTheme} mode`, "info");
 }
 
 // ----------------- FLASH SALE LIVE COUNTDOWN -----------------
 function startFlashSaleCountdown() {
-  // 8 hours 45 minutes target from page load
   let totalSeconds = 8 * 3600 + 45 * 60 + 20;
 
   function tick() {
@@ -305,6 +497,9 @@ function renderProducts() {
       <span class="color-dot" style="background-color: ${color};" title="Color option"></span>
     `).join("");
 
+    // Simulated Live Viewer Count
+    const liveViewers = Math.floor(8 + (product.id * 3) % 15);
+
     return `
       <article class="product-card" data-id="${product.id}">
         <div class="product-image-box">
@@ -338,15 +533,20 @@ function renderProducts() {
 
           <h3 class="product-title" title="${product.title}">${product.title}</h3>
           
-          <div class="product-rating">
-            <span class="rating-stars">${starsHtml}</span>
-            <span class="rating-count">(${product.reviewsCount})</span>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div class="product-rating">
+              <span class="rating-stars">${starsHtml}</span>
+              <span class="rating-count">(${product.reviewsCount})</span>
+            </div>
+            <span class="live-viewers-tag" style="margin-bottom: 0;">
+              <span class="pulse-red"></span> ${liveViewers} viewing
+            </span>
           </div>
 
           <div class="product-footer">
             <div class="product-pricing">
-              <span class="price-current">$${product.price.toFixed(2)}</span>
-              ${product.originalPrice ? `<span class="price-old">$${product.originalPrice.toFixed(2)}</span>` : ""}
+              <span class="price-current">${formatPrice(product.price)}</span>
+              ${product.originalPrice ? `<span class="price-old">${formatPrice(product.originalPrice)}</span>` : ""}
             </div>
             <button class="btn-card-add" onclick="quickAddToCart(${product.id})">
               <i class="fa-solid fa-cart-plus"></i> Add
@@ -356,6 +556,8 @@ function renderProducts() {
       </article>
     `;
   }).join("");
+
+  setup3DCardTilt();
 }
 
 function getBadgeClass(badge) {
@@ -393,6 +595,7 @@ function setupVoiceSearch() {
         recognition.start();
         isListening = true;
         elements.voiceSearchBtn.classList.add("listening");
+        playPopSound();
         showToast("🎙️ Listening... Speak your search query", "info");
       } catch (err) {
         console.error("Speech recognition error:", err);
@@ -410,6 +613,7 @@ function setupVoiceSearch() {
     state.searchQuery = transcript;
     elements.clearSearchBtn.style.display = "flex";
     renderProducts();
+    playChimeSound();
     showToast(`Searched for: "${transcript}"`, "success");
   };
 
@@ -428,6 +632,7 @@ function setupVoiceSearch() {
 
 // ----------------- PRODUCT COMPARISON SYSTEM -----------------
 function toggleCompare(productId) {
+  playPopSound();
   const index = state.compare.indexOf(productId);
   const product = state.products.find(p => p.id === productId);
 
@@ -466,6 +671,7 @@ function clearCompare() {
   updateCompareUI();
   renderProducts();
   closeCompareModal();
+  playPopSound();
   showToast("Comparison list cleared", "info");
 }
 
@@ -475,6 +681,7 @@ function openCompareModal() {
     return;
   }
 
+  playPopSound();
   const items = state.compare.map(id => state.products.find(p => p.id === id)).filter(Boolean);
 
   let headerRow = `<th>Product</th>` + items.map(p => `
@@ -482,7 +689,7 @@ function openCompareModal() {
       <div class="compare-item-card">
         <img src="${p.image}" alt="${p.title}" class="compare-item-img" />
         <div class="compare-item-title">${p.title}</div>
-        <div class="compare-price">$${p.price.toFixed(2)}</div>
+        <div class="compare-price">${formatPrice(p.price)}</div>
         <button class="btn btn-primary btn-sm" onclick="quickAddToCart(${p.id})">Add to Cart</button>
       </div>
     </td>
@@ -524,7 +731,6 @@ function closeCompareModal() {
 
 // ----------------- RECENTLY VIEWED SHELF -----------------
 function trackRecentlyViewed(productId) {
-  // Remove if exists and put at front
   state.recentlyViewed = state.recentlyViewed.filter(id => id !== productId);
   state.recentlyViewed.unshift(productId);
   if (state.recentlyViewed.length > 8) state.recentlyViewed.pop();
@@ -549,7 +755,7 @@ function renderRecentlyViewed() {
       <img src="${item.image}" alt="${item.title}" />
       <div class="recent-info">
         <h5>${item.title}</h5>
-        <span>$${item.price.toFixed(2)}</span>
+        <span>${formatPrice(item.price)}</span>
       </div>
     </div>
   `).join("");
@@ -559,11 +765,13 @@ function clearRecentlyViewed() {
   state.recentlyViewed = [];
   localStorage.setItem("nexus_recent", JSON.stringify(state.recentlyViewed));
   renderRecentlyViewed();
+  playPopSound();
   showToast("Browsing history cleared", "info");
 }
 
 // ----------------- WISHLIST FUNCTIONALITY -----------------
 function toggleWishlist(productId) {
+  playPopSound();
   const index = state.wishlist.indexOf(productId);
   const product = state.products.find(p => p.id === productId);
 
@@ -601,6 +809,7 @@ function addToCart(productId, quantity = 1) {
   const product = state.products.find(p => p.id === productId);
   if (!product) return;
 
+  playPopSound();
   const existingItem = state.cart.find(item => item.id === productId);
 
   if (existingItem) {
@@ -616,6 +825,7 @@ function addToCart(productId, quantity = 1) {
 }
 
 function updateCartQuantity(productId, delta) {
+  playPopSound();
   const item = state.cart.find(i => i.id === productId);
   if (!item) return;
 
@@ -630,6 +840,7 @@ function updateCartQuantity(productId, delta) {
 }
 
 function removeFromCart(productId) {
+  playPopSound();
   const product = state.products.find(p => p.id === productId);
   state.cart = state.cart.filter(item => item.id !== productId);
   saveCart();
@@ -639,6 +850,7 @@ function removeFromCart(productId) {
 
 function clearCart() {
   if (state.cart.length === 0) return;
+  playPopSound();
   state.cart = [];
   state.appliedPromo = null;
   saveCart();
@@ -657,40 +869,40 @@ function updateCartUI() {
   elements.cartCount.textContent = totalItemCount;
   elements.drawerCartCount.textContent = `(${totalItemCount})`;
 
-  // Calculate Subtotal
-  let subtotal = 0;
+  // Calculate Subtotal (in USD base)
+  let subtotalUSD = 0;
   const cartDetailedItems = state.cart.map(item => {
     const product = state.products.find(p => p.id === item.id);
-    const lineTotal = product ? product.price * item.quantity : 0;
-    subtotal += lineTotal;
-    return { ...item, product, lineTotal };
+    const lineTotalUSD = product ? product.price * item.quantity : 0;
+    subtotalUSD += lineTotalUSD;
+    return { ...item, product, lineTotalUSD };
   }).filter(item => item.product !== undefined);
 
-  // Free Shipping Calculation ($50 threshold)
-  const freeShippingThreshold = 50.0;
-  let shippingFee = subtotal >= freeShippingThreshold || subtotal === 0 ? 0 : 9.99;
+  // Free Shipping Calculation ($50 / ~₹4,250 threshold)
+  const freeShippingThresholdUSD = 50.0;
+  let shippingFeeUSD = subtotalUSD >= freeShippingThresholdUSD || subtotalUSD === 0 ? 0 : 9.99;
   
   if (state.appliedPromo && state.appliedPromo.freeShipping) {
-    shippingFee = 0;
+    shippingFeeUSD = 0;
   }
 
   // Update Free Shipping Progress
-  if (subtotal >= freeShippingThreshold) {
+  if (subtotalUSD >= freeShippingThresholdUSD) {
     elements.shippingBarText.innerHTML = `🎉 <strong>Congratulations!</strong> You get FREE Shipping!`;
     elements.shippingBarProgress.style.width = "100%";
   } else {
-    const remaining = (freeShippingThreshold - subtotal).toFixed(2);
-    const percent = Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100));
-    elements.shippingBarText.innerHTML = `Add <strong>$${remaining}</strong> more for Free Shipping!`;
+    const remainingUSD = (freeShippingThresholdUSD - subtotalUSD);
+    const percent = Math.min(100, Math.round((subtotalUSD / freeShippingThresholdUSD) * 100));
+    elements.shippingBarText.innerHTML = `Add <strong>${formatPrice(remainingUSD)}</strong> more for Free Shipping!`;
     elements.shippingBarProgress.style.width = `${percent}%`;
   }
 
   // Calculate Discount
-  let discountAmount = 0;
+  let discountAmountUSD = 0;
   if (state.appliedPromo && state.appliedPromo.discount) {
-    discountAmount = subtotal * state.appliedPromo.discount;
+    discountAmountUSD = subtotalUSD * state.appliedPromo.discount;
     elements.summaryDiscountRow.style.display = "flex";
-    elements.summaryDiscount.textContent = `-$${discountAmount.toFixed(2)}`;
+    elements.summaryDiscount.textContent = `-${formatPrice(discountAmountUSD)}`;
     elements.appliedCouponTag.style.display = "flex";
     elements.appliedCouponCode.textContent = state.appliedPromo.code;
     elements.appliedDiscountPercent.textContent = state.appliedPromo.label;
@@ -700,14 +912,14 @@ function updateCartUI() {
   }
 
   // Total
-  const grandTotal = Math.max(0, subtotal - discountAmount + shippingFee);
+  const grandTotalUSD = Math.max(0, subtotalUSD - discountAmountUSD + shippingFeeUSD);
 
   // Update Text Elements
-  elements.cartHeaderTotal.textContent = `$${grandTotal.toFixed(2)}`;
-  elements.summarySubtotal.textContent = `$${subtotal.toFixed(2)}`;
-  elements.summaryShipping.textContent = shippingFee === 0 ? "FREE" : `$${shippingFee.toFixed(2)}`;
-  elements.summaryTotal.textContent = `$${grandTotal.toFixed(2)}`;
-  elements.checkoutPayableTotal.textContent = `$${grandTotal.toFixed(2)}`;
+  elements.cartHeaderTotal.textContent = formatPrice(grandTotalUSD);
+  elements.summarySubtotal.textContent = formatPrice(subtotalUSD);
+  elements.summaryShipping.textContent = shippingFeeUSD === 0 ? "FREE" : formatPrice(shippingFeeUSD);
+  elements.summaryTotal.textContent = formatPrice(grandTotalUSD);
+  elements.checkoutPayableTotal.textContent = formatPrice(grandTotalUSD);
 
   // Toggle Empty State vs Items List
   if (cartDetailedItems.length === 0) {
@@ -725,7 +937,7 @@ function updateCartUI() {
         <img src="${item.product.image}" alt="${item.product.title}" class="cart-item-img" />
         <div class="cart-item-details">
           <h4 class="cart-item-title">${item.product.title}</h4>
-          <div class="cart-item-price">$${item.product.price.toFixed(2)}</div>
+          <div class="cart-item-price">${formatPrice(item.product.price)}</div>
           <div class="cart-item-controls">
             <div class="qty-counter">
               <button class="qty-btn" onclick="updateCartQuantity(${item.id}, -1)" aria-label="Decrease quantity">
@@ -748,6 +960,7 @@ function updateCartUI() {
 
 // ----------------- CART DRAWER OPEN / CLOSE -----------------
 function openCartDrawer() {
+  playPopSound();
   elements.cartDrawer.classList.add("open");
   elements.cartBackdrop.classList.add("open");
   document.body.style.overflow = "hidden";
@@ -771,8 +984,10 @@ function applyPromoCode() {
     state.appliedPromo = { code, ...VALID_PROMOS[code] };
     elements.cartCouponInput.value = "";
     updateCartUI();
+    launchConfetti();
     showToast(`Promo code "${code}" applied successfully!`, "success");
   } else {
+    playPopSound();
     showToast(`Invalid promo code "${code}". Try SAVE20`, "error");
   }
 }
@@ -780,6 +995,7 @@ function applyPromoCode() {
 function removePromoCode() {
   state.appliedPromo = null;
   updateCartUI();
+  playPopSound();
   showToast("Promo code removed", "info");
 }
 
@@ -790,6 +1006,7 @@ function openQuickView(productId) {
   const product = state.products.find(p => p.id === productId);
   if (!product) return;
 
+  playPopSound();
   trackRecentlyViewed(productId);
   quickViewActiveQty = 1;
   const isWishlisted = state.wishlist.includes(product.id);
@@ -829,8 +1046,8 @@ function openQuickView(productId) {
       <h2 class="qv-title">${product.title}</h2>
       
       <div class="qv-pricing">
-        <span class="current">$${product.price.toFixed(2)}</span>
-        ${product.originalPrice ? `<span class="old">$${product.originalPrice.toFixed(2)}</span>` : ""}
+        <span class="current">${formatPrice(product.price)}</span>
+        ${product.originalPrice ? `<span class="old">${formatPrice(product.originalPrice)}</span>` : ""}
         ${product.originalPrice ? `<span class="discount-tag">Save ${(100 - (product.price / product.originalPrice * 100)).toFixed(0)}%</span>` : ""}
       </div>
 
@@ -868,6 +1085,7 @@ function openQuickView(productId) {
 }
 
 function changeQuickViewQty(delta) {
+  playPopSound();
   quickViewActiveQty = Math.max(1, quickViewActiveQty + delta);
   const display = document.getElementById("qvQtyDisplay");
   if (display) display.textContent = quickViewActiveQty;
@@ -891,6 +1109,7 @@ function openCheckout() {
     return;
   }
 
+  playPopSound();
   closeCartDrawer();
   elements.checkoutFormStep.style.display = "block";
   elements.checkoutSuccessStep.style.display = "none";
@@ -940,6 +1159,7 @@ function handleCheckoutSubmit(e) {
     saveCart();
     updateCartUI();
 
+    launchConfetti();
     showToast("Order placed successfully! Confirmation sent.", "success");
   }, 1200);
 }
@@ -950,6 +1170,7 @@ function printInvoice() {
 
 // ----------------- AI SHOPPING ASSISTANT LOGIC -----------------
 function toggleAiChat() {
+  playPopSound();
   elements.aiChatWindow.classList.toggle("open");
   if (elements.aiChatWindow.classList.contains("open")) {
     elements.aiChatInput.focus();
@@ -966,11 +1187,10 @@ function handleAiSubmit(e) {
   const query = elements.aiChatInput.value.trim();
   if (!query) return;
 
-  // Append User Message
+  playPopSound();
   appendAiMessage(query, "user");
   elements.aiChatInput.value = "";
 
-  // Bot thinking simulation
   setTimeout(() => {
     const botResponse = generateAiResponse(query);
     appendAiMessage(botResponse.text, "bot", botResponse.product);
@@ -989,7 +1209,7 @@ function appendAiMessage(text, sender, product = null) {
         <img src="${product.image}" alt="${product.title}" />
         <div class="ai-rec-info">
           <h6>${product.title}</h6>
-          <span>$${product.price.toFixed(2)}</span>
+          <span>${formatPrice(product.price)}</span>
         </div>
         <button class="btn btn-primary btn-sm" style="margin-left: auto;" onclick="quickAddToCart(${product.id}); openCartDrawer();">
           Add
@@ -1016,16 +1236,16 @@ function generateAiResponse(q) {
   if (query.includes("headphone") || query.includes("audio") || query.includes("sound") || query.includes("earbud")) {
     const p = state.products.find(item => item.category === "Audio");
     return {
-      text: "I highly recommend the **Aura Sound Pro Wireless**. It features active noise cancellation, 40-hour playback, and is currently on sale!",
+      text: `I highly recommend the **Aura Sound Pro Wireless**. It features active noise cancellation, 40-hour playback, and is on sale for ${formatPrice(p.price)}!`,
       product: p
     };
   }
 
-  if (query.includes("under") || query.includes("budget") || query.includes("cheap") || query.includes("100")) {
+  if (query.includes("under") || query.includes("budget") || query.includes("cheap") || query.includes("100") || query.includes("5000") || query.includes("10000")) {
     const affordable = state.products.filter(item => item.price < 100);
     const p = affordable[0] || state.products[2];
     return {
-      text: `We have great gear under $100! Check out the **${p.title}** for just $${p.price.toFixed(2)}.`,
+      text: `We have great budget gear! Check out the **${p.title}** for just ${formatPrice(p.price)}.`,
       product: p
     };
   }
@@ -1061,7 +1281,6 @@ function generateAiResponse(q) {
     };
   }
 
-  // Fallback smart response
   const randomProduct = state.products[Math.floor(Math.random() * state.products.length)];
   return {
     text: `That sounds great! You might also love our **${randomProduct.title}** in ${randomProduct.category}. Let me know if you want to explore more options!`,
@@ -1098,8 +1317,10 @@ function showToast(message, type = "info") {
 
 // ----------------- EVENT LISTENERS SETUP -----------------
 function setupEventListeners() {
-  // Theme Toggle
+  // Theme & Currency & Sound Toggles
   elements.themeToggleBtn.addEventListener("click", toggleTheme);
+  elements.currencyToggleBtn.addEventListener("click", toggleCurrency);
+  elements.soundToggleBtn.addEventListener("click", toggleSound);
 
   // Live Search
   elements.searchInput.addEventListener("input", (e) => {
@@ -1119,6 +1340,7 @@ function setupEventListeners() {
   // Category Pills
   elements.categoryPills.addEventListener("click", (e) => {
     if (!e.target.classList.contains("category-pill")) return;
+    playPopSound();
     document.querySelectorAll(".category-pill").forEach(p => p.classList.remove("active"));
     e.target.classList.add("active");
     state.activeCategory = e.target.dataset.category;
@@ -1127,12 +1349,14 @@ function setupEventListeners() {
 
   // Wishlist Filter Toggle
   elements.wishlistFilterBtn.addEventListener("click", () => {
+    playPopSound();
     state.showWishlistOnly = !state.showWishlistOnly;
     updateWishlistUI();
     renderProducts();
   });
 
   elements.wishlistHeaderBtn.addEventListener("click", () => {
+    playPopSound();
     state.showWishlistOnly = true;
     updateWishlistUI();
     renderProducts();
@@ -1155,12 +1379,14 @@ function setupEventListeners() {
 
   // Sorting
   elements.sortSelect.addEventListener("change", (e) => {
+    playPopSound();
     state.sortBy = e.target.value;
     renderProducts();
   });
 
   // Reset Filters Button
   elements.resetFiltersBtn.addEventListener("click", () => {
+    playPopSound();
     state.activeCategory = "All";
     state.searchQuery = "";
     state.showWishlistOnly = false;
@@ -1204,6 +1430,7 @@ function setupEventListeners() {
   // Payment Option selection
   document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
     radio.addEventListener("change", (e) => {
+      playPopSound();
       document.querySelectorAll(".payment-option").forEach(opt => opt.classList.remove("active"));
       e.target.closest(".payment-option").classList.add("active");
       const cardFields = document.getElementById("cardFields");
@@ -1247,6 +1474,7 @@ function setupEventListeners() {
   if (elements.copyPromoBtn) {
     elements.copyPromoBtn.addEventListener("click", () => {
       navigator.clipboard.writeText("SAVE20").then(() => {
+        launchConfetti();
         showToast("Coupon 'SAVE20' copied to clipboard!", "success");
       }).catch(() => {
         showToast("Use code: SAVE20", "info");
@@ -1268,6 +1496,7 @@ function setupEventListeners() {
       e.preventDefault();
       const email = elements.newsletterEmail.value.trim();
       if (email) {
+        launchConfetti();
         showToast(`Thank you for subscribing, ${email}! Check your inbox.`, "success");
         elements.newsletterEmail.value = "";
       }
@@ -1284,6 +1513,7 @@ function setupEventListeners() {
   });
 
   elements.backToTopBtn.addEventListener("click", () => {
+    playPopSound();
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 
@@ -1301,6 +1531,7 @@ function setupEventListeners() {
 
 // Global helper for footer category link
 function filterByCategory(categoryName) {
+  playPopSound();
   state.activeCategory = categoryName;
   state.showWishlistOnly = false;
   document.querySelectorAll(".category-pill").forEach(p => {

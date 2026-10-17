@@ -18,12 +18,18 @@
 </head>
 <body>
 
+  <!-- ================= AMBIENT MESH GLOW (MODERN UX) ================= -->
+  <div class="ambient-glow ambient-glow-1"></div>
+  <div class="ambient-glow ambient-glow-2"></div>
+  <div class="ambient-glow ambient-glow-3"></div>
+  <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
+
   <!-- ================= TOP NOTIFICATION BAR ================= -->
   <div class="top-announcement">
     <div class="container announcement-content">
       <span><i class="fa-solid fa-crown" style="color: #fbbf24;"></i> Curated & Designed by <strong>Balveer Chaudhary</strong> | Flash Sale Code: <strong>SAVE20</strong></span>
       <div class="announcement-links">
-        <a href="#perks"><i class="fa-solid fa-truck-fast"></i> Free Shipping > $50</a>
+        <a href="#perks"><i class="fa-solid fa-truck-fast"></i> Free Shipping > ₹4,000 / $50</a>
         <a href="https://github.com/balveer43" target="_blank"><i class="fa-brands fa-github"></i> Balveer Chaudhary</a>
         <a href="#newsletter"><i class="fa-solid fa-envelope"></i> Newsletter</a>
       </div>
@@ -83,6 +89,16 @@
 
       <!-- Navigation Actions -->
       <div class="nav-actions">
+        <!-- Currency Selector (USD / INR) -->
+        <button id="currencyToggleBtn" class="action-btn currency-toggle-btn" title="Switch Currency (USD / INR)" aria-label="Switch Currency">
+          <span id="currentCurrencyLabel">₹ INR</span>
+        </button>
+
+        <!-- Sound FX Mute/Unmute Toggle -->
+        <button id="soundToggleBtn" class="action-btn" title="Toggle UI Sound Effects" aria-label="Toggle Sound">
+          <i class="fa-solid fa-volume-high"></i>
+        </button>
+
         <!-- Theme Toggle -->
         <button id="themeToggleBtn" class="action-btn" title="Toggle Dark/Light Mode" aria-label="Toggle Theme">
           <i class="fa-solid fa-moon"></i>
@@ -104,7 +120,7 @@
         <button id="cartHeaderBtn" class="action-btn cart-btn" title="View Cart" aria-label="View Cart">
           <i class="fa-solid fa-cart-shopping"></i>
           <span class="badge" id="cartCount">0</span>
-          <span class="cart-btn-total" id="cartHeaderTotal">$0.00</span>
+          <span class="cart-btn-total" id="cartHeaderTotal">₹0</span>
         </button>
       </div>
     </div>
