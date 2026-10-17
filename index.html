@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nexus | Modern E-Commerce Store</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  
+  <!-- Custom Stylesheet -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ================= TOP NOTIFICATION BAR ================= -->
+  <div class="top-announcement">
+    <div class="container announcement-content">
+      <span><i class="fa-solid fa-bolt"></i> Spring Flash Sale: Use code <strong>SAVE20</strong> for 20% off all orders!</span>
+      <div class="announcement-links">
+        <a href="#perks"><i class="fa-solid fa-truck-fast"></i> Free Shipping > $50</a>
+        <a href="#newsletter"><i class="fa-solid fa-envelope"></i> Newsletter</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= HEADER / NAVBAR ================= -->
+  <header class="main-header" id="header">
+    <div class="container navbar">
+      <!-- Brand Logo -->
+      <a href="#" class="brand-logo">
+        <span class="logo-icon"><i class="fa-solid fa-bag-shopping"></i></span>
+        <span class="logo-text">NEXUS<span>.</span></span>
+      </a>
+
+      <!-- Search Bar -->
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="searchInput" placeholder="Search tech, audio, sneakers, wearables..." autocomplete="off" />
+        <button id="clearSearchBtn" class="clear-search-btn" title="Clear Search" style="display: none;">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Navigation Actions -->
+      <div class="nav-actions">
+        <!-- Theme Toggle -->
+        <button id="themeToggleBtn" class="action-btn" title="Toggle Dark/Light Mode" aria-label="Toggle Theme">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+
+        <!-- Wishlist Toggle -->
+        <button id="wishlistHeaderBtn" class="action-btn" title="View Wishlist" aria-label="View Wishlist">
+          <i class="fa-regular fa-heart"></i>
+          <span class="badge" id="wishlistCount">0</span>
+        </button>
+
+        <!-- Cart Button -->
+        <button id="cartHeaderBtn" class="action-btn cart-btn" title="View Cart" aria-label="View Cart">
+          <i class="fa-solid fa-cart-shopping"></i>
+          <span class="badge" id="cartCount">0</span>
+          <span class="cart-btn-total" id="cartHeaderTotal">$0.00</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= HERO SECTION ================= -->
+  <section class="hero-section">
+    <div class="container hero-grid">
+      <div class="hero-content">
+        <div class="hero-pill">
+          <i class="fa-solid fa-fire"></i> New Season Arrivals 2026
+        </div>
+        <h1 class="hero-title">Elevate Your Everyday Tech & Style</h1>
+        <p class="hero-description">
+          Discover handpicked premium electronics, high-fidelity audio gear, and sleek modern accessories engineered for the forward-thinking generation.
+        </p>
+        <div class="hero-buttons">
+          <a href="#catalog" class="btn btn-primary">
+            <span>Shop Collection</span>
+            <i class="fa-solid fa-arrow-right"></i>
+          </a>
+          <button class="btn btn-secondary" id="explorePromoBtn">
+            <span>View 20% Promo</span>
+            <i class="fa-solid fa-tags"></i>
+          </button>
+        </div>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <strong>100%</strong>
+            <span>Authentic</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <strong>24h</strong>
+            <span>Dispatch</span>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <strong>4.9 ★</strong>
+            <span>Customer Rating</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="hero-card-glow"></div>
+        <div class="hero-card">
+          <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80" alt="Featured Aura Pro Headphones" class="hero-img" />
+          <div class="hero-card-tag">
+            <span class="pulse-dot"></span> Deal of the Week
+          </div>
+          <div class="hero-card-info">
+            <h4>Aura Sound Pro Wireless</h4>
+            <div class="hero-card-price">
+              <span class="current">$179.99</span>
+              <span class="old">$249.99</span>
+            </div>
+            <button class="btn-hero-add" onclick="quickAddToCart(1)">
+              <i class="fa-solid fa-cart-plus"></i> Add to Cart
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= VALUE PROPS / PERKS ================= -->
+  <section class="perks-section" id="perks">
+    <div class="container perks-grid">
+      <div class="perk-card">
+        <div class="perk-icon"><i class="fa-solid fa-truck-fast"></i></div>
+        <div class="perk-info">
+          <h4>Free Express Shipping</h4>
+          <p>On all domestic orders over $50.00</p>
+        </div>
+      </div>
+      <div class="perk-card">
+        <div class="perk-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <div class="perk-info">
+          <h4>100% Secure Checkout</h4>
+          <p>256-Bit SSL Encrypted protection</p>
+        </div>
+      </div>
+      <div class="perk-card">
+        <div class="perk-icon"><i class="fa-solid fa-rotate-left"></i></div>
+        <div class="perk-info">
+          <h4>30-Day Hassle Returns</h4>
+          <p>Instant money-back guarantee</p>
+        </div>
+      </div>
+      <div class="perk-card">
+        <div class="perk-icon"><i class="fa-solid fa-headset"></i></div>
+        <div class="perk-info">
+          <h4>24/7 Expert Support</h4>
+          <p>Live chat & email dedicated team</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CATALOG SECTION ================= -->
+  <section class="catalog-section" id="catalog">
+    <div class="container">
+      <!-- Section Header -->
+      <div class="section-header">
+        <div>
+          <span class="section-subtitle">Curated Store Catalog</span>
+          <h2 class="section-title">Explore Trending Essentials</h2>
+        </div>
+        <div class="catalog-results-count" id="catalogCount">Showing all items</div>
+      </div>
+
+      <!-- Controls & Filter Toolbar -->
+      <div class="filter-toolbar">
+        <!-- Category Filter Pills -->
+        <div class="category-pills" id="categoryPills">
+          <button class="category-pill active" data-category="All">All Items</button>
+          <button class="category-pill" data-category="Audio">Audio</button>
+          <button class="category-pill" data-category="Wearables">Wearables</button>
+          <button class="category-pill" data-category="Footwear">Footwear</button>
+          <button class="category-pill" data-category="Electronics">Electronics</button>
+          <button class="category-pill" data-category="Accessories">Accessories</button>
+        </div>
+
+        <!-- Right Side Filter & Sort -->
+        <div class="filter-controls">
+          <!-- Wishlist Only Toggle -->
+          <button class="filter-toggle-btn" id="wishlistFilterBtn">
+            <i class="fa-regular fa-heart"></i>
+            <span>Favorites</span>
+            <span class="filter-count-badge" id="wishlistFilterCount">0</span>
+          </button>
+
+          <!-- Sorting Dropdown -->
+          <div class="select-wrapper">
+            <i class="fa-solid fa-arrow-down-short-wide select-icon"></i>
+            <select id="sortSelect" aria-label="Sort products">
+              <option value="default">Sort by: Featured</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="rating">Highest Rated</option>
+              <option value="discount">Biggest Discount</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Products Grid -->
+      <div class="products-grid" id="productsGrid">
+        <!-- Injected via JavaScript -->
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-catalog" id="emptyCatalog" style="display: none;">
+        <div class="empty-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <h3>No matching products found</h3>
+        <p>Try searching with another keyword or resetting the category filter.</p>
+        <button class="btn btn-secondary" id="resetFiltersBtn">Reset All Filters</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= PROMO BANNER ================= -->
+  <section class="banner-section">
+    <div class="container">
+      <div class="promo-banner">
+        <div class="promo-text">
+          <span class="promo-tag">LIMITED TIME SPECIAL</span>
+          <h3>Get 20% OFF Your Entire Purchase</h3>
+          <p>Apply coupon code <strong>SAVE20</strong> at checkout to redeem instant savings.</p>
+        </div>
+        <div class="promo-code-box">
+          <span class="code">SAVE20</span>
+          <button class="btn btn-copy" id="copyPromoBtn" title="Copy coupon code">
+            <i class="fa-regular fa-copy"></i> Copy Code
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= NEWSLETTER SECTION ================= -->
+  <section class="newsletter-section" id="newsletter">
+    <div class="container newsletter-box">
+      <div class="newsletter-content">
+        <h3>Join the Nexus Club</h3>
+        <p>Subscribe for member-only drops, early flash sales, and tech inspiration straight to your inbox.</p>
+      </div>
+      <form class="newsletter-form" id="newsletterForm">
+        <div class="newsletter-input-group">
+          <i class="fa-regular fa-envelope"></i>
+          <input type="email" id="newsletterEmail" placeholder="Enter your email address..." required />
+        </div>
+        <button type="submit" class="btn btn-primary">Subscribe</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="main-footer">
+    <div class="container footer-grid">
+      <div class="footer-col brand-col">
+        <div class="brand-logo">
+          <span class="logo-icon"><i class="fa-solid fa-bag-shopping"></i></span>
+          <span class="logo-text">NEXUS<span>.</span></span>
+        </div>
+        <p>Your one-stop destination for premium modern gear, audio accessories, and tech lifestyle essentials.</p>
+        <div class="social-links">
+          <a href="#" aria-label="Twitter"><i class="fa-brands fa-x-twitter"></i></a>
+          <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#" aria-label="GitHub"><i class="fa-brands fa-github"></i></a>
+          <a href="#" aria-label="Discord"><i class="fa-brands fa-discord"></i></a>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4>Shop Categories</h4>
+        <ul>
+          <li><a href="#catalog" onclick="filterByCategory('Audio')">Audio & Sound</a></li>
+          <li><a href="#catalog" onclick="filterByCategory('Wearables')">Smart Wearables</a></li>
+          <li><a href="#catalog" onclick="filterByCategory('Footwear')">Performance Footwear</a></li>
+          <li><a href="#catalog" onclick="filterByCategory('Electronics')">Computer Gear</a></li>
+          <li><a href="#catalog" onclick="filterByCategory('Accessories')">Everyday Carry</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Customer Care</h4>
+        <ul>
+          <li><a href="#perks">Shipping Policy</a></li>
+          <li><a href="#perks">Returns & Exchanges</a></li>
+          <li><a href="#perks">Track Your Order</a></li>
+          <li><a href="#perks">Warranty Registration</a></li>
+          <li><a href="#perks">Help & Support FAQ</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4>Store Info</h4>
+        <ul class="contact-list">
+          <li><i class="fa-solid fa-location-dot"></i> 742 Evergreen Terrace, Suite 100</li>
+          <li><i class="fa-solid fa-phone"></i> +1 (800) 555-0199</li>
+          <li><i class="fa-solid fa-envelope"></i> support@nexusstore.io</li>
+          <li><i class="fa-solid fa-clock"></i> Mon - Sat: 9:00 AM - 8:00 PM</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>&copy; 2026 Nexus E-Commerce. All rights reserved. Crafted with HTML5, CSS3, & Vanilla JavaScript.</p>
+      <div class="payment-methods">
+        <i class="fa-brands fa-cc-visa" title="Visa"></i>
+        <i class="fa-brands fa-cc-mastercard" title="Mastercard"></i>
+        <i class="fa-brands fa-cc-apple-pay" title="Apple Pay"></i>
+        <i class="fa-brands fa-cc-paypal" title="PayPal"></i>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= CART SLIDE-OVER DRAWER ================= -->
+  <div class="cart-backdrop" id="cartBackdrop"></div>
+  <aside class="cart-drawer" id="cartDrawer" aria-label="Shopping Cart">
+    <div class="cart-header">
+      <div class="cart-header-title">
+        <i class="fa-solid fa-bag-shopping"></i>
+        <h3>Shopping Cart</h3>
+        <span class="cart-header-count" id="drawerCartCount">(0)</span>
+      </div>
+      <button class="cart-close-btn" id="cartCloseBtn" aria-label="Close cart">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- Free shipping progress bar -->
+    <div class="shipping-bar-container">
+      <div class="shipping-bar-text" id="shippingBarText">Add $50.00 more for Free Shipping!</div>
+      <div class="shipping-bar-track">
+        <div class="shipping-bar-progress" id="shippingBarProgress" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- Items List -->
+    <div class="cart-items-container" id="cartItemsContainer">
+      <!-- Injected via JavaScript -->
+    </div>
+
+    <!-- Empty Cart View -->
+    <div class="cart-empty" id="cartEmptyView">
+      <div class="empty-cart-icon"><i class="fa-solid fa-cart-arrow-down"></i></div>
+      <h4>Your cart is empty</h4>
+      <p>Looks like you haven't added any gear yet. Check out our latest deals!</p>
+      <button class="btn btn-primary" id="continueShoppingBtn">Start Shopping</button>
+    </div>
+
+    <!-- Cart Footer & Checkout -->
+    <div class="cart-footer" id="cartFooter">
+      <!-- Promo Code Field -->
+      <div class="promo-input-box">
+        <div class="promo-input-wrapper">
+          <i class="fa-solid fa-tag"></i>
+          <input type="text" id="cartCouponInput" placeholder="Promo code (e.g. SAVE20)" />
+        </div>
+        <button class="btn btn-apply" id="applyCouponBtn">Apply</button>
+      </div>
+
+      <!-- Applied Coupon Tag -->
+      <div class="applied-coupon" id="appliedCouponTag" style="display: none;">
+        <span><i class="fa-solid fa-check"></i> <strong id="appliedCouponCode"></strong> applied (<span id="appliedDiscountPercent"></span> off)</span>
+        <button id="removeCouponBtn" title="Remove coupon"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+
+      <!-- Order Summary Breakdown -->
+      <div class="cart-summary-breakdown">
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span id="summarySubtotal">$0.00</span>
+        </div>
+        <div class="summary-row discount-row" id="summaryDiscountRow" style="display: none;">
+          <span>Discount</span>
+          <span id="summaryDiscount">-$0.00</span>
+        </div>
+        <div class="summary-row">
+          <span>Estimated Shipping</span>
+          <span id="summaryShipping">$0.00</span>
+        </div>
+        <div class="summary-row total-row">
+          <span>Total</span>
+          <span id="summaryTotal">$0.00</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <button class="btn btn-primary btn-block" id="proceedToCheckoutBtn">
+        <span>Proceed to Checkout</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+      <button class="btn btn-outline btn-block" id="clearCartBtn">
+        <i class="fa-regular fa-trash-can"></i> Clear Cart
+      </button>
+    </div>
+  </aside>
+
+  <!-- ================= QUICK VIEW MODAL ================= -->
+  <div class="modal-backdrop" id="quickViewBackdrop">
+    <div class="modal quick-view-modal" id="quickViewModal">
+      <button class="modal-close-btn" id="quickViewCloseBtn" aria-label="Close modal">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="quick-view-grid" id="quickViewContent">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= CHECKOUT MODAL ================= -->
+  <div class="modal-backdrop" id="checkoutBackdrop">
+    <div class="modal checkout-modal" id="checkoutModal">
+      <button class="modal-close-btn" id="checkoutCloseBtn" aria-label="Close checkout">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <!-- Step 1: Checkout Form -->
+      <div id="checkoutFormStep">
+        <div class="modal-header">
+          <i class="fa-solid fa-credit-card"></i>
+          <div>
+            <h3>Secure Checkout</h3>
+            <p>Complete your delivery and payment details</p>
+          </div>
+        </div>
+
+        <form id="checkoutForm">
+          <div class="checkout-grid">
+            <!-- Left: Shipping Information -->
+            <div class="checkout-col">
+              <h4 class="form-section-title"><i class="fa-solid fa-truck"></i> Shipping Address</h4>
+              
+              <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input type="text" id="fullName" placeholder="Jane Doe" required />
+              </div>
+
+              <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="jane.doe@example.com" required />
+              </div>
+
+              <div class="form-group">
+                <label for="address">Street Address</label>
+                <input type="text" id="address" placeholder="123 Innovation Way" required />
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="city">City</label>
+                  <input type="text" id="city" placeholder="San Francisco" required />
+                </div>
+                <div class="form-group">
+                  <label for="zipCode">ZIP / Postal Code</label>
+                  <input type="text" id="zipCode" placeholder="94105" required />
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Payment & Summary -->
+            <div class="checkout-col">
+              <h4 class="form-section-title"><i class="fa-solid fa-wallet"></i> Payment Method</h4>
+              
+              <div class="payment-selection">
+                <label class="payment-option active">
+                  <input type="radio" name="paymentMethod" value="card" checked />
+                  <span><i class="fa-regular fa-credit-card"></i> Credit Card</span>
+                </label>
+                <label class="payment-option">
+                  <input type="radio" name="paymentMethod" value="paypal" />
+                  <span><i class="fa-brands fa-paypal"></i> PayPal</span>
+                </label>
+                <label class="payment-option">
+                  <input type="radio" name="paymentMethod" value="cod" />
+                  <span><i class="fa-solid fa-hand-holding-dollar"></i> Cash on Delivery</span>
+                </label>
+              </div>
+
+              <div class="card-details-box" id="cardFields">
+                <div class="form-group">
+                  <label for="cardNumber">Card Number</label>
+                  <input type="text" id="cardNumber" placeholder="4532 •••• •••• 8892" maxlength="19" required />
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="cardExp">Expiry Date</label>
+                    <input type="text" id="cardExp" placeholder="MM/YY" maxlength="5" required />
+                  </div>
+                  <div class="form-group">
+                    <label for="cardCvc">CVC / CVV</label>
+                    <input type="password" id="cardCvc" placeholder="123" maxlength="4" required />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Order Mini Summary -->
+              <div class="checkout-order-summary">
+                <div class="summary-line">
+                  <span>Payable Amount:</span>
+                  <strong class="highlight-total" id="checkoutPayableTotal">$0.00</strong>
+                </div>
+                <small class="secure-notice">
+                  <i class="fa-solid fa-lock"></i> Encrypted 256-bit payment simulation
+                </small>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block" id="payNowBtn">
+                <span id="payNowText">Pay & Place Order</span>
+                <i class="fa-solid fa-shield-check"></i>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Step 2: Order Confirmed Success Screen -->
+      <div id="checkoutSuccessStep" style="display: none;">
+        <div class="order-success-box">
+          <div class="success-icon-wrapper">
+            <i class="fa-solid fa-check"></i>
+          </div>
+          <h2>Thank You For Your Order!</h2>
+          <p>Your transaction was successful. We have sent a confirmation email to <strong id="successCustomerEmail">customer@example.com</strong>.</p>
+          
+          <div class="success-order-details">
+            <div class="detail-line">
+              <span>Order Number:</span>
+              <strong id="successOrderId">#NX-98231</strong>
+            </div>
+            <div class="detail-line">
+              <span>Estimated Delivery:</span>
+              <strong id="successDeliveryDate">3-5 Business Days</strong>
+            </div>
+            <div class="detail-line">
+              <span>Total Paid:</span>
+              <strong id="successTotalPaid">$0.00</strong>
+            </div>
+          </div>
+
+          <div class="success-actions">
+            <button class="btn btn-primary" id="successDoneBtn">Continue Shopping</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= TOAST NOTIFICATION CONTAINER ================= -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Scripts -->
+  <script src="products.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
