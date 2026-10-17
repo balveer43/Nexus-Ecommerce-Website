@@ -1006,6 +1006,13 @@ function appendAiMessage(text, sender, product = null) {
 function generateAiResponse(q) {
   const query = q.toLowerCase();
 
+  if (query.includes("balveer") || query.includes("chaudhary") || query.includes("creator") || query.includes("who made") || query.includes("developer") || query.includes("owner")) {
+    return {
+      text: "👑 This exclusive E-Commerce platform was architected, designed, and curated by **Balveer Chaudhary**! Check out his portfolio on GitHub: [balveer43](https://github.com/balveer43)",
+      product: state.products[0]
+    };
+  }
+
   if (query.includes("headphone") || query.includes("audio") || query.includes("sound") || query.includes("earbud")) {
     const p = state.products.find(item => item.category === "Audio");
     return {
