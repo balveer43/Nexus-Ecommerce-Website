@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nexus | Modern E-Commerce Store</title>
+  <title>Nexus | Modern E-Commerce Store & AI Shopping Assistant</title>
   
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -24,7 +24,31 @@
       <span><i class="fa-solid fa-bolt"></i> Spring Flash Sale: Use code <strong>SAVE20</strong> for 20% off all orders!</span>
       <div class="announcement-links">
         <a href="#perks"><i class="fa-solid fa-truck-fast"></i> Free Shipping > $50</a>
+        <a href="#recentlyViewedSection"><i class="fa-solid fa-clock-rotate-left"></i> History</a>
         <a href="#newsletter"><i class="fa-solid fa-envelope"></i> Newsletter</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FLASH SALE COUNTDOWN TICKER ================= -->
+  <div class="flash-sale-strip">
+    <div class="container flash-sale-flex">
+      <div class="flash-sale-tag">
+        <i class="fa-solid fa-fire-flame-curved"></i>
+        <span>LIMITED TIME FLASH SALE</span>
+      </div>
+      <div class="countdown-timer" id="countdownTimer">
+        <div class="time-block"><span id="cdHours">08</span><small>Hrs</small></div>
+        <span class="colon">:</span>
+        <div class="time-block"><span id="cdMinutes">45</span><small>Min</small></div>
+        <span class="colon">:</span>
+        <div class="time-block"><span id="cdSeconds">30</span><small>Sec</small></div>
+      </div>
+      <div class="flash-sale-cta">
+        <span>Extra <strong>20% OFF</strong> applied at checkout</span>
+        <button class="btn-flash-claim" onclick="openCartDrawer(); elements.cartCouponInput.value='SAVE20'; applyPromoCode();">
+          Claim Code
+        </button>
       </div>
     </div>
   </div>
@@ -38,10 +62,17 @@
         <span class="logo-text">NEXUS<span>.</span></span>
       </a>
 
-      <!-- Search Bar -->
+      <!-- Search Bar with Voice Recognition -->
       <div class="search-box">
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
         <input type="text" id="searchInput" placeholder="Search tech, audio, sneakers, wearables..." autocomplete="off" />
+        
+        <!-- Voice Search Button -->
+        <button id="voiceSearchBtn" class="voice-search-btn" title="Voice Search" aria-label="Search by voice">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+
+        <!-- Clear Search Button -->
         <button id="clearSearchBtn" class="clear-search-btn" title="Clear Search" style="display: none;">
           <i class="fa-solid fa-xmark"></i>
         </button>
@@ -52,6 +83,12 @@
         <!-- Theme Toggle -->
         <button id="themeToggleBtn" class="action-btn" title="Toggle Dark/Light Mode" aria-label="Toggle Theme">
           <i class="fa-solid fa-moon"></i>
+        </button>
+
+        <!-- Compare Action Trigger -->
+        <button id="compareHeaderBtn" class="action-btn" title="Compare Products" aria-label="Compare Products">
+          <i class="fa-solid fa-scale-balanced"></i>
+          <span class="badge" id="compareCount">0</span>
         </button>
 
         <!-- Wishlist Toggle -->
@@ -156,10 +193,10 @@
         </div>
       </div>
       <div class="perk-card">
-        <div class="perk-icon"><i class="fa-solid fa-headset"></i></div>
+        <div class="perk-icon"><i class="fa-solid fa-robot"></i></div>
         <div class="perk-info">
-          <h4>24/7 Expert Support</h4>
-          <p>Live chat & email dedicated team</p>
+          <h4>AI Shopping Assistant</h4>
+          <p>Instant personalized recommendations</p>
         </div>
       </div>
     </div>
@@ -223,6 +260,24 @@
         <h3>No matching products found</h3>
         <p>Try searching with another keyword or resetting the category filter.</p>
         <button class="btn btn-secondary" id="resetFiltersBtn">Reset All Filters</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= RECENTLY VIEWED PRODUCTS ================= -->
+  <section class="recently-viewed-section" id="recentlyViewedSection" style="display: none;">
+    <div class="container">
+      <div class="section-header">
+        <div>
+          <span class="section-subtitle">Browsing History</span>
+          <h2 class="section-title">Recently Viewed Gear</h2>
+        </div>
+        <button class="btn btn-outline" id="clearRecentBtn" style="padding: 6px 14px; font-size: 0.82rem;">
+          <i class="fa-regular fa-trash-can"></i> Clear History
+        </button>
+      </div>
+      <div class="recently-viewed-track" id="recentlyViewedGrid">
+        <!-- Injected via JavaScript -->
       </div>
     </div>
   </section>
@@ -419,6 +474,39 @@
     </div>
   </div>
 
+  <!-- ================= PRODUCT COMPARISON MODAL ================= -->
+  <div class="modal-backdrop" id="compareBackdrop">
+    <div class="modal compare-modal" id="compareModal">
+      <button class="modal-close-btn" id="compareCloseBtn" aria-label="Close comparison">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <div class="modal-header">
+        <i class="fa-solid fa-scale-balanced"></i>
+        <div>
+          <h3>Product Comparison</h3>
+          <p>Side-by-side specifications, prices, and features</p>
+        </div>
+      </div>
+      <div class="compare-table-wrapper" id="compareTableContainer">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= FLOATING COMPARE DOCK ================= -->
+  <div class="compare-dock" id="compareDock" style="display: none;">
+    <div class="compare-dock-content">
+      <div class="compare-dock-info">
+        <i class="fa-solid fa-scale-balanced"></i>
+        <span>Comparing <strong id="dockCompareCount">0</strong> products (Max 4)</span>
+      </div>
+      <div class="compare-dock-actions">
+        <button class="btn btn-primary btn-sm" id="viewComparisonBtn">View Comparison</button>
+        <button class="btn btn-outline btn-sm" id="clearCompareBtn">Clear</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= CHECKOUT MODAL ================= -->
   <div class="modal-backdrop" id="checkoutBackdrop">
     <div class="modal checkout-modal" id="checkoutModal">
@@ -534,7 +622,7 @@
           <h2>Thank You For Your Order!</h2>
           <p>Your transaction was successful. We have sent a confirmation email to <strong id="successCustomerEmail">customer@example.com</strong>.</p>
           
-          <div class="success-order-details">
+          <div class="success-order-details" id="invoiceDetailsArea">
             <div class="detail-line">
               <span>Order Number:</span>
               <strong id="successOrderId">#NX-98231</strong>
@@ -547,9 +635,16 @@
               <span>Total Paid:</span>
               <strong id="successTotalPaid">$0.00</strong>
             </div>
+            <div class="detail-line">
+              <span>Payment Status:</span>
+              <span style="color: var(--success); font-weight: 700;">CONFIRMED</span>
+            </div>
           </div>
 
-          <div class="success-actions">
+          <div class="success-actions" style="gap: 12px; display: flex; justify-content: center; flex-wrap: wrap;">
+            <button class="btn btn-secondary" onclick="printInvoice()">
+              <i class="fa-solid fa-print"></i> Print Invoice
+            </button>
             <button class="btn btn-primary" id="successDoneBtn">Continue Shopping</button>
           </div>
         </div>
@@ -557,6 +652,61 @@
 
     </div>
   </div>
+
+  <!-- ================= AI SHOPPING ASSISTANT CHAT WIDGET ================= -->
+  <div class="ai-chat-container">
+    <!-- Chat Window -->
+    <div class="ai-chat-window" id="aiChatWindow">
+      <div class="ai-chat-header">
+        <div class="ai-avatar-group">
+          <div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>
+          <div>
+            <h4>Nexus AI Assistant</h4>
+            <span class="online-indicator"><span class="dot"></span> Online</span>
+          </div>
+        </div>
+        <button class="ai-close-btn" id="aiChatCloseBtn" aria-label="Close AI Chat">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Messages Body -->
+      <div class="ai-chat-body" id="aiChatBody">
+        <div class="ai-msg bot">
+          <div class="msg-bubble">
+            👋 Hi there! I'm your Nexus Smart Shopping Assistant. How can I help you discover great gear today?
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Prompt Chips -->
+      <div class="ai-quick-chips">
+        <button class="chip-btn" onclick="sendAiPrompt('Show best headphones')">🎧 Best Audio</button>
+        <button class="chip-btn" onclick="sendAiPrompt('Items under $100')">💰 Under $100</button>
+        <button class="chip-btn" onclick="sendAiPrompt('Any discount coupons?')">🎟️ Promo Codes</button>
+        <button class="chip-btn" onclick="sendAiPrompt('What is trending?')">🔥 Trending</button>
+      </div>
+
+      <!-- Chat Input Form -->
+      <form class="ai-chat-input-area" id="aiChatForm">
+        <input type="text" id="aiChatInput" placeholder="Ask anything (e.g. Recommend a gift for runner)..." autocomplete="off" />
+        <button type="submit" class="ai-send-btn" aria-label="Send message">
+          <i class="fa-solid fa-paper-plane"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- Floating Chat Toggle Button -->
+    <button class="ai-chat-toggle" id="aiChatToggle" aria-label="Open AI Assistant">
+      <i class="fa-solid fa-wand-magic-sparkles"></i>
+      <span class="ai-toggle-label">Ask AI</span>
+    </button>
+  </div>
+
+  <!-- ================= BACK TO TOP BUTTON ================= -->
+  <button id="backToTopBtn" class="back-to-top" title="Back to top" aria-label="Back to top">
+    <i class="fa-solid fa-arrow-up"></i>
+  </button>
 
   <!-- ================= TOAST NOTIFICATION CONTAINER ================= -->
   <div class="toast-container" id="toastContainer"></div>

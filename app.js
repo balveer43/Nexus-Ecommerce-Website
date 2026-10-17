@@ -1,8 +1,20 @@
 /**
  * ==========================================================================
- * NEXUS E-COMMERCE APPLICATION JAVASCRIPT
- * Features: Catalog Filtering, Real-time Search, Wishlist, Offcanvas Cart,
- * Quick View Modal, Checkout Simulation, Theme Switcher & Toast System
+ * NEXUS E-COMMERCE APPLICATION JAVASCRIPT (MODERN 2026 EDITION)
+ * Features:
+ * - Real-Time Search & Multi-Level Filtering
+ * - Voice Search via Web Speech API
+ * - AI Shopping Assistant Chatbot (Context-aware recommendations)
+ * - Live Flash Sale Countdown Ticker
+ * - Product Comparison System (Side-by-side matrix)
+ * - Recently Viewed Browsing History Shelf
+ * - Offcanvas Shopping Cart Drawer with Free-Shipping Meter
+ * - Promo Code Engine (SAVE20, SAVE10, FREESHIP)
+ * - Quick View Modal with Color Swatches & Specs
+ * - Simulated Checkout Flow & Printable Invoice
+ * - Dark & Light Mode Theme Switcher (localStorage)
+ * - Floating Back-To-Top Control
+ * - Responsive Toast Notification Engine
  * ==========================================================================
  */
 
@@ -11,6 +23,8 @@ const state = {
   products: PRODUCTS || [],
   cart: JSON.parse(localStorage.getItem("nexus_cart")) || [],
   wishlist: JSON.parse(localStorage.getItem("nexus_wishlist")) || [],
+  compare: JSON.parse(localStorage.getItem("nexus_compare")) || [],
+  recentlyViewed: JSON.parse(localStorage.getItem("nexus_recent")) || [],
   activeCategory: "All",
   searchQuery: "",
   sortBy: "default",
@@ -37,10 +51,13 @@ const elements = {
   cartHeaderTotal: document.getElementById("cartHeaderTotal"),
   wishlistHeaderBtn: document.getElementById("wishlistHeaderBtn"),
   wishlistCount: document.getElementById("wishlistCount"),
+  compareHeaderBtn: document.getElementById("compareHeaderBtn"),
+  compareCount: document.getElementById("compareCount"),
   
   // Search
   searchInput: document.getElementById("searchInput"),
   clearSearchBtn: document.getElementById("clearSearchBtn"),
+  voiceSearchBtn: document.getElementById("voiceSearchBtn"),
   
   // Filters & Catalog
   categoryPills: document.getElementById("categoryPills"),
@@ -51,6 +68,26 @@ const elements = {
   emptyCatalog: document.getElementById("emptyCatalog"),
   catalogCount: document.getElementById("catalogCount"),
   resetFiltersBtn: document.getElementById("resetFiltersBtn"),
+  
+  // Flash Sale Timer
+  cdHours: document.getElementById("cdHours"),
+  cdMinutes: document.getElementById("cdMinutes"),
+  cdSeconds: document.getElementById("cdSeconds"),
+  
+  // Compare Dock & Modal
+  compareDock: document.getElementById("compareDock"),
+  dockCompareCount: document.getElementById("dockCompareCount"),
+  viewComparisonBtn: document.getElementById("viewComparisonBtn"),
+  clearCompareBtn: document.getElementById("clearCompareBtn"),
+  compareBackdrop: document.getElementById("compareBackdrop"),
+  compareModal: document.getElementById("compareModal"),
+  compareCloseBtn: document.getElementById("compareCloseBtn"),
+  compareTableContainer: document.getElementById("compareTableContainer"),
+  
+  // Recently Viewed
+  recentlyViewedSection: document.getElementById("recentlyViewedSection"),
+  recentlyViewedGrid: document.getElementById("recentlyViewedGrid"),
+  clearRecentBtn: document.getElementById("clearRecentBtn"),
   
   // Cart Drawer
   cartDrawer: document.getElementById("cartDrawer"),
@@ -102,11 +139,20 @@ const elements = {
   successCustomerEmail: document.getElementById("successCustomerEmail"),
   successDoneBtn: document.getElementById("successDoneBtn"),
   
+  // AI Chat Assistant
+  aiChatToggle: document.getElementById("aiChatToggle"),
+  aiChatWindow: document.getElementById("aiChatWindow"),
+  aiChatCloseBtn: document.getElementById("aiChatCloseBtn"),
+  aiChatBody: document.getElementById("aiChatBody"),
+  aiChatForm: document.getElementById("aiChatForm"),
+  aiChatInput: document.getElementById("aiChatInput"),
+  
   // Extra elements
   copyPromoBtn: document.getElementById("copyPromoBtn"),
   explorePromoBtn: document.getElementById("explorePromoBtn"),
   newsletterForm: document.getElementById("newsletterForm"),
   newsletterEmail: document.getElementById("newsletterEmail"),
+  backToTopBtn: document.getElementById("backToTopBtn"),
   toastContainer: document.getElementById("toastContainer")
 };
 
@@ -117,6 +163,10 @@ function initApp() {
   renderProducts();
   updateWishlistUI();
   updateCartUI();
+  updateCompareUI();
+  renderRecentlyViewed();
+  startFlashSaleCountdown();
+  setupVoiceSearch();
 }
 
 // ----------------- THEME MANAGEMENT -----------------
@@ -141,6 +191,28 @@ function toggleTheme() {
   showToast(`Switched to ${newTheme} mode`, "info");
 }
 
+// ----------------- FLASH SALE LIVE COUNTDOWN -----------------
+function startFlashSaleCountdown() {
+  // 8 hours 45 minutes target from page load
+  let totalSeconds = 8 * 3600 + 45 * 60 + 20;
+
+  function tick() {
+    if (totalSeconds <= 0) totalSeconds = 24 * 3600;
+    totalSeconds--;
+
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = totalSeconds % 60;
+
+    if (elements.cdHours) elements.cdHours.textContent = String(h).padStart(2, "0");
+    if (elements.cdMinutes) elements.cdMinutes.textContent = String(m).padStart(2, "0");
+    if (elements.cdSeconds) elements.cdSeconds.textContent = String(s).padStart(2, "0");
+  }
+
+  tick();
+  setInterval(tick, 1000);
+}
+
 // ----------------- PRODUCT FILTERING & SORTING -----------------
 function getFilteredProducts() {
   let list = [...state.products];
@@ -156,7 +228,8 @@ function getFilteredProducts() {
     list = list.filter(p => 
       p.title.toLowerCase().includes(q) ||
       p.category.toLowerCase().includes(q) ||
-      p.description.toLowerCase().includes(q)
+      p.description.toLowerCase().includes(q) ||
+      (p.features && p.features.some(f => f.toLowerCase().includes(q)))
     );
   }
 
@@ -184,7 +257,6 @@ function getFilteredProducts() {
       });
       break;
     default:
-      // Featured / default
       list.sort((a, b) => a.id - b.id);
   }
 
@@ -216,42 +288,54 @@ function renderProducts() {
   // Build Grid HTML
   elements.productsGrid.innerHTML = filtered.map(product => {
     const isWishlisted = state.wishlist.includes(product.id);
+    const isCompared = state.compare.includes(product.id);
     const badgeClass = getBadgeClass(product.badge);
     
     // Generate Stars
     const fullStars = Math.floor(product.rating);
     const halfStar = product.rating % 1 >= 0.5;
     let starsHtml = "";
-    for (let i = 0; i < fullStars; i++) {
-      starsHtml += '<i class="fa-solid fa-star"></i>';
-    }
-    if (halfStar) {
-      starsHtml += '<i class="fa-solid fa-star-half-stroke"></i>';
-    }
+    for (let i = 0; i < fullStars; i++) starsHtml += '<i class="fa-solid fa-star"></i>';
+    if (halfStar) starsHtml += '<i class="fa-solid fa-star-half-stroke"></i>';
     const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
-    for (let i = 0; i < emptyStars; i++) {
-      starsHtml += '<i class="fa-regular fa-star"></i>';
-    }
+    for (let i = 0; i < emptyStars; i++) starsHtml += '<i class="fa-regular fa-star"></i>';
+
+    // Color Swatches
+    const swatchesHtml = (product.colors || []).map(color => `
+      <span class="color-dot" style="background-color: ${color};" title="Color option"></span>
+    `).join("");
 
     return `
       <article class="product-card" data-id="${product.id}">
         <div class="product-image-box">
           ${product.badge ? `<span class="product-badge ${badgeClass}">${product.badge}</span>` : ""}
+          
           <div class="card-actions-top">
             <button class="btn-wishlist ${isWishlisted ? "active" : ""}" 
                     onclick="toggleWishlist(${product.id})" 
                     title="${isWishlisted ? "Remove from favorites" : "Add to favorites"}">
               <i class="${isWishlisted ? "fa-solid" : "fa-regular"} fa-heart"></i>
             </button>
+            <button class="btn-card-compare ${isCompared ? "active" : ""}" 
+                    onclick="toggleCompare(${product.id})" 
+                    title="${isCompared ? "Remove from compare" : "Compare this product"}">
+              <i class="fa-solid fa-scale-balanced"></i>
+            </button>
           </div>
+
           <img src="${product.image}" alt="${product.title}" class="product-image" loading="lazy" />
+          
           <button class="btn-quick-view" onclick="openQuickView(${product.id})">
             <i class="fa-regular fa-eye"></i> Quick View
           </button>
         </div>
 
         <div class="product-details">
-          <span class="product-category">${product.category}</span>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="product-category">${product.category}</span>
+            <div class="color-swatches">${swatchesHtml}</div>
+          </div>
+
           <h3 class="product-title" title="${product.title}">${product.title}</h3>
           
           <div class="product-rating">
@@ -282,6 +366,200 @@ function getBadgeClass(badge) {
   if (b.includes("new")) return "badge-new";
   if (b.includes("trending")) return "badge-trending";
   return "badge-best-seller";
+}
+
+// ----------------- VOICE SEARCH INTEGRATION -----------------
+function setupVoiceSearch() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    if (elements.voiceSearchBtn) {
+      elements.voiceSearchBtn.title = "Voice search not supported in this browser";
+      elements.voiceSearchBtn.style.opacity = "0.5";
+    }
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.lang = "en-US";
+
+  let isListening = false;
+
+  elements.voiceSearchBtn.addEventListener("click", () => {
+    if (!isListening) {
+      try {
+        recognition.start();
+        isListening = true;
+        elements.voiceSearchBtn.classList.add("listening");
+        showToast("🎙️ Listening... Speak your search query", "info");
+      } catch (err) {
+        console.error("Speech recognition error:", err);
+      }
+    } else {
+      recognition.stop();
+      isListening = false;
+      elements.voiceSearchBtn.classList.remove("listening");
+    }
+  });
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    elements.searchInput.value = transcript;
+    state.searchQuery = transcript;
+    elements.clearSearchBtn.style.display = "flex";
+    renderProducts();
+    showToast(`Searched for: "${transcript}"`, "success");
+  };
+
+  recognition.onspeechend = () => {
+    recognition.stop();
+    isListening = false;
+    elements.voiceSearchBtn.classList.remove("listening");
+  };
+
+  recognition.onerror = () => {
+    isListening = false;
+    elements.voiceSearchBtn.classList.remove("listening");
+    showToast("Voice recognition couldn't hear. Try again.", "error");
+  };
+}
+
+// ----------------- PRODUCT COMPARISON SYSTEM -----------------
+function toggleCompare(productId) {
+  const index = state.compare.indexOf(productId);
+  const product = state.products.find(p => p.id === productId);
+
+  if (index > -1) {
+    state.compare.splice(index, 1);
+    showToast(`Removed "${product ? product.title : 'item'}" from comparison`, "info");
+  } else {
+    if (state.compare.length >= 4) {
+      showToast("You can compare up to 4 items simultaneously", "error");
+      return;
+    }
+    state.compare.push(productId);
+    showToast(`Added "${product ? product.title : 'item'}" to comparison!`, "success");
+  }
+
+  localStorage.setItem("nexus_compare", JSON.stringify(state.compare));
+  updateCompareUI();
+  renderProducts();
+}
+
+function updateCompareUI() {
+  const count = state.compare.length;
+  if (elements.compareCount) elements.compareCount.textContent = count;
+  if (elements.dockCompareCount) elements.dockCompareCount.textContent = count;
+
+  if (count > 0) {
+    elements.compareDock.style.display = "block";
+  } else {
+    elements.compareDock.style.display = "none";
+  }
+}
+
+function clearCompare() {
+  state.compare = [];
+  localStorage.setItem("nexus_compare", JSON.stringify(state.compare));
+  updateCompareUI();
+  renderProducts();
+  closeCompareModal();
+  showToast("Comparison list cleared", "info");
+}
+
+function openCompareModal() {
+  if (state.compare.length === 0) {
+    showToast("Add products to comparison first!", "error");
+    return;
+  }
+
+  const items = state.compare.map(id => state.products.find(p => p.id === id)).filter(Boolean);
+
+  let headerRow = `<th>Product</th>` + items.map(p => `
+    <td>
+      <div class="compare-item-card">
+        <img src="${p.image}" alt="${p.title}" class="compare-item-img" />
+        <div class="compare-item-title">${p.title}</div>
+        <div class="compare-price">$${p.price.toFixed(2)}</div>
+        <button class="btn btn-primary btn-sm" onclick="quickAddToCart(${p.id})">Add to Cart</button>
+      </div>
+    </td>
+  `).join("");
+
+  let categoryRow = `<th>Category</th>` + items.map(p => `<td>${p.category}</td>`).join("");
+  let ratingRow = `<th>Rating</th>` + items.map(p => `<td>${p.rating} ★ (${p.reviewsCount} reviews)</td>`).join("");
+  let warrantyRow = `<th>Warranty</th>` + items.map(p => `<td>${p.warranty || "1 Year Standard"}</td>`).join("");
+  let stockRow = `<th>Stock Status</th>` + items.map(p => `<td><strong style="color: var(--success);">${p.stock || 20} in stock</strong></td>`).join("");
+  let featuresRow = `<th>Key Features</th>` + items.map(p => `
+    <td>
+      <ul style="list-style: none; padding-left: 0; font-size: 0.8rem; text-align: left;">
+        ${(p.features || []).map(f => `<li>• ${f}</li>`).join("")}
+      </ul>
+    </td>
+  `).join("");
+
+  elements.compareTableContainer.innerHTML = `
+    <table class="compare-table">
+      <tbody>
+        <tr>${headerRow}</tr>
+        <tr>${categoryRow}</tr>
+        <tr>${ratingRow}</tr>
+        <tr>${warrantyRow}</tr>
+        <tr>${stockRow}</tr>
+        <tr>${featuresRow}</tr>
+      </tbody>
+    </table>
+  `;
+
+  elements.compareBackdrop.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function closeCompareModal() {
+  elements.compareBackdrop.classList.remove("open");
+  document.body.style.overflow = "";
+}
+
+// ----------------- RECENTLY VIEWED SHELF -----------------
+function trackRecentlyViewed(productId) {
+  // Remove if exists and put at front
+  state.recentlyViewed = state.recentlyViewed.filter(id => id !== productId);
+  state.recentlyViewed.unshift(productId);
+  if (state.recentlyViewed.length > 8) state.recentlyViewed.pop();
+
+  localStorage.setItem("nexus_recent", JSON.stringify(state.recentlyViewed));
+  renderRecentlyViewed();
+}
+
+function renderRecentlyViewed() {
+  if (!elements.recentlyViewedSection) return;
+
+  if (state.recentlyViewed.length === 0) {
+    elements.recentlyViewedSection.style.display = "none";
+    return;
+  }
+
+  elements.recentlyViewedSection.style.display = "block";
+  const items = state.recentlyViewed.map(id => state.products.find(p => p.id === id)).filter(Boolean);
+
+  elements.recentlyViewedGrid.innerHTML = items.map(item => `
+    <div class="recent-card" onclick="openQuickView(${item.id})">
+      <img src="${item.image}" alt="${item.title}" />
+      <div class="recent-info">
+        <h5>${item.title}</h5>
+        <span>$${item.price.toFixed(2)}</span>
+      </div>
+    </div>
+  `).join("");
+}
+
+function clearRecentlyViewed() {
+  state.recentlyViewed = [];
+  localStorage.setItem("nexus_recent", JSON.stringify(state.recentlyViewed));
+  renderRecentlyViewed();
+  showToast("Browsing history cleared", "info");
 }
 
 // ----------------- WISHLIST FUNCTIONALITY -----------------
@@ -333,6 +611,7 @@ function addToCart(productId, quantity = 1) {
 
   saveCart();
   updateCartUI();
+  trackRecentlyViewed(productId);
   showToast(`Added ${quantity > 1 ? quantity + "x " : ""}"${product.title}" to cart!`, "success");
 }
 
@@ -511,6 +790,7 @@ function openQuickView(productId) {
   const product = state.products.find(p => p.id === productId);
   if (!product) return;
 
+  trackRecentlyViewed(productId);
   quickViewActiveQty = 1;
   const isWishlisted = state.wishlist.includes(product.id);
 
@@ -518,10 +798,34 @@ function openQuickView(productId) {
     <li><i class="fa-solid fa-circle-check"></i> ${f}</li>
   `).join("");
 
+  const swatchesHtml = (product.colors || []).map(c => `
+    <span class="color-dot" style="background-color: ${c}; width: 18px; height: 18px; cursor: pointer;" title="Select variant"></span>
+  `).join("");
+
+  const reviewsList = (product.reviews || []).map(r => `
+    <div style="background: var(--bg-surface-alt); padding: 8px 12px; border-radius: 6px; margin-top: 8px;">
+      <div style="display: flex; justify-content: space-between; font-size: 0.78rem; font-weight: 700;">
+        <span>${r.author} ★★★★★</span>
+        <span style="color: var(--text-muted);">${r.date}</span>
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">"${r.text}"</p>
+    </div>
+  `).join("");
+
   elements.quickViewContent.innerHTML = `
-    <img src="${product.image}" alt="${product.title}" class="quick-view-img" />
+    <div>
+      <img src="${product.image}" alt="${product.title}" class="quick-view-img" />
+      <div style="margin-top: 16px;">
+        <h5 style="font-size: 0.88rem; font-weight: 700; margin-bottom: 6px;">Verified Customer Feedback</h5>
+        ${reviewsList}
+      </div>
+    </div>
+    
     <div class="quick-view-details">
-      <span class="qv-category">${product.category}</span>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span class="qv-category">${product.category}</span>
+        <span style="font-size: 0.8rem; font-weight: 700; color: var(--success);"><i class="fa-solid fa-box"></i> ${product.stock || 20} In Stock</span>
+      </div>
       <h2 class="qv-title">${product.title}</h2>
       
       <div class="qv-pricing">
@@ -531,6 +835,11 @@ function openQuickView(productId) {
       </div>
 
       <p class="qv-description">${product.description}</p>
+
+      <div style="margin-bottom: 14px;">
+        <strong style="font-size: 0.82rem; color: var(--text-muted);">Available Colors:</strong>
+        <div style="display: flex; gap: 8px; margin-top: 6px;">${swatchesHtml}</div>
+      </div>
 
       <ul class="qv-features">
         ${featuresList}
@@ -575,7 +884,7 @@ function closeQuickView() {
   document.body.style.overflow = "";
 }
 
-// ----------------- CHECKOUT FLOW & MODAL -----------------
+// ----------------- CHECKOUT FLOW & PRINT INVOICE -----------------
 function openCheckout() {
   if (state.cart.length === 0) {
     showToast("Your cart is empty! Add items to checkout.", "error");
@@ -597,20 +906,15 @@ function closeCheckout() {
 function handleCheckoutSubmit(e) {
   e.preventDefault();
 
-  // Validate fields
-  const fullName = document.getElementById("fullName").value.trim();
   const email = document.getElementById("email").value.trim();
 
-  // Simulate payment processing
   elements.payNowBtn.disabled = true;
   elements.payNowText.textContent = "Processing Order...";
 
   setTimeout(() => {
-    // Generate order ID
     const randomOrderId = "#NX-" + Math.floor(100000 + Math.random() * 900000);
     const paidTotal = elements.checkoutPayableTotal.textContent;
 
-    // Delivery date calculation (4 days ahead)
     const deliveryDate = new Date();
     deliveryDate.setDate(deliveryDate.getDate() + 4);
     const dateFormatted = deliveryDate.toLocaleDateString("en-US", {
@@ -620,21 +924,17 @@ function handleCheckoutSubmit(e) {
       year: "numeric"
     });
 
-    // Populate success screen
     elements.successOrderId.textContent = randomOrderId;
     elements.successCustomerEmail.textContent = email || "customer@example.com";
     elements.successDeliveryDate.textContent = dateFormatted;
     elements.successTotalPaid.textContent = paidTotal;
 
-    // Transition view
     elements.checkoutFormStep.style.display = "none";
     elements.checkoutSuccessStep.style.display = "block";
 
-    // Reset checkout button
     elements.payNowBtn.disabled = false;
     elements.payNowText.textContent = "Pay & Place Order";
 
-    // Clear cart
     state.cart = [];
     state.appliedPromo = null;
     saveCart();
@@ -642,6 +942,124 @@ function handleCheckoutSubmit(e) {
 
     showToast("Order placed successfully! Confirmation sent.", "success");
   }, 1200);
+}
+
+function printInvoice() {
+  window.print();
+}
+
+// ----------------- AI SHOPPING ASSISTANT LOGIC -----------------
+function toggleAiChat() {
+  elements.aiChatWindow.classList.toggle("open");
+  if (elements.aiChatWindow.classList.contains("open")) {
+    elements.aiChatInput.focus();
+  }
+}
+
+function sendAiPrompt(text) {
+  elements.aiChatInput.value = text;
+  handleAiSubmit();
+}
+
+function handleAiSubmit(e) {
+  if (e) e.preventDefault();
+  const query = elements.aiChatInput.value.trim();
+  if (!query) return;
+
+  // Append User Message
+  appendAiMessage(query, "user");
+  elements.aiChatInput.value = "";
+
+  // Bot thinking simulation
+  setTimeout(() => {
+    const botResponse = generateAiResponse(query);
+    appendAiMessage(botResponse.text, "bot", botResponse.product);
+  }, 500);
+}
+
+function appendAiMessage(text, sender, product = null) {
+  const msgDiv = document.createElement("div");
+  msgDiv.className = `ai-msg ${sender}`;
+
+  let content = `<div class="msg-bubble">${text}</div>`;
+
+  if (product) {
+    content += `
+      <div class="ai-rec-card">
+        <img src="${product.image}" alt="${product.title}" />
+        <div class="ai-rec-info">
+          <h6>${product.title}</h6>
+          <span>$${product.price.toFixed(2)}</span>
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-left: auto;" onclick="quickAddToCart(${product.id}); openCartDrawer();">
+          Add
+        </button>
+      </div>
+    `;
+  }
+
+  msgDiv.innerHTML = content;
+  elements.aiChatBody.appendChild(msgDiv);
+  elements.aiChatBody.scrollTop = elements.aiChatBody.scrollHeight;
+}
+
+function generateAiResponse(q) {
+  const query = q.toLowerCase();
+
+  if (query.includes("headphone") || query.includes("audio") || query.includes("sound") || query.includes("earbud")) {
+    const p = state.products.find(item => item.category === "Audio");
+    return {
+      text: "I highly recommend the **Aura Sound Pro Wireless**. It features active noise cancellation, 40-hour playback, and is currently on sale!",
+      product: p
+    };
+  }
+
+  if (query.includes("under") || query.includes("budget") || query.includes("cheap") || query.includes("100")) {
+    const affordable = state.products.filter(item => item.price < 100);
+    const p = affordable[0] || state.products[2];
+    return {
+      text: `We have great gear under $100! Check out the **${p.title}** for just $${p.price.toFixed(2)}.`,
+      product: p
+    };
+  }
+
+  if (query.includes("coupon") || query.includes("discount") || query.includes("code") || query.includes("promo") || query.includes("save")) {
+    return {
+      text: "🎉 You can use coupon **SAVE20** for 20% off all orders, or **FREESHIP** for 100% free delivery on any cart!",
+      product: null
+    };
+  }
+
+  if (query.includes("watch") || query.includes("smartwatch") || query.includes("fitness")) {
+    const p = state.products.find(item => item.category === "Wearables");
+    return {
+      text: "Our top-rated wearable is the **Chrono Apex Smartwatch Titanium** with ECG, 7-day battery, and 5ATM water resistance.",
+      product: p
+    };
+  }
+
+  if (query.includes("shoes") || query.includes("runner") || query.includes("footwear") || query.includes("sneaker")) {
+    const p = state.products.find(item => item.category === "Footwear");
+    return {
+      text: "The **Veloce Minimalist Runner Sneakers** feature ultra-cloud cushioning and breathable knit weave for supreme comfort.",
+      product: p
+    };
+  }
+
+  if (query.includes("trending") || query.includes("hot") || query.includes("popular") || query.includes("best")) {
+    const p = state.products.find(item => item.badge === "Popular" || item.badge === "Trending") || state.products[0];
+    return {
+      text: `Our hottest trending item right now is **${p.title}** rated ${p.rating}★ by verified buyers!`,
+      product: p
+    };
+  }
+
+  // Fallback smart response
+  const randomProduct = state.products[Math.floor(Math.random() * state.products.length)];
+  return {
+    text: `That sounds great! You might also love our **${randomProduct.title}** in ${randomProduct.category}. Let me know if you want to explore more options!`,
+    product: randomProduct
+  };
 }
 
 // ----------------- TOAST NOTIFICATION UTILITY -----------------
@@ -660,13 +1078,11 @@ function showToast(message, type = "info") {
 
   elements.toastContainer.appendChild(toast);
 
-  // Auto dismiss after 3.2s
   setTimeout(() => {
     toast.classList.add("hide");
     setTimeout(() => toast.remove(), 350);
   }, 3200);
 
-  // Dismiss on click
   toast.addEventListener("click", () => {
     toast.classList.add("hide");
     setTimeout(() => toast.remove(), 350);
@@ -709,13 +1125,26 @@ function setupEventListeners() {
     renderProducts();
   });
 
-  // Wishlist Header Button (Scroll to catalog & show favorites)
   elements.wishlistHeaderBtn.addEventListener("click", () => {
     state.showWishlistOnly = true;
     updateWishlistUI();
     renderProducts();
     document.getElementById("catalog").scrollIntoView({ behavior: "smooth" });
   });
+
+  // Compare Triggers
+  elements.compareHeaderBtn.addEventListener("click", openCompareModal);
+  elements.viewComparisonBtn.addEventListener("click", openCompareModal);
+  elements.clearCompareBtn.addEventListener("click", clearCompare);
+  elements.compareCloseBtn.addEventListener("click", closeCompareModal);
+  elements.compareBackdrop.addEventListener("click", (e) => {
+    if (e.target === elements.compareBackdrop) closeCompareModal();
+  });
+
+  // Recently Viewed Clear
+  if (elements.clearRecentBtn) {
+    elements.clearRecentBtn.addEventListener("click", clearRecentlyViewed);
+  }
 
   // Sorting
   elements.sortSelect.addEventListener("change", (e) => {
@@ -765,7 +1194,7 @@ function setupEventListeners() {
   elements.checkoutForm.addEventListener("submit", handleCheckoutSubmit);
   elements.successDoneBtn.addEventListener("click", closeCheckout);
 
-  // Payment Option radio styling
+  // Payment Option selection
   document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
     radio.addEventListener("change", (e) => {
       document.querySelectorAll(".payment-option").forEach(opt => opt.classList.remove("active"));
@@ -796,11 +1225,16 @@ function setupEventListeners() {
     });
   }
 
-  // Quick View Modal Backdrop close
+  // Quick View Modal
   elements.quickViewCloseBtn.addEventListener("click", closeQuickView);
   elements.quickViewBackdrop.addEventListener("click", (e) => {
     if (e.target === elements.quickViewBackdrop) closeQuickView();
   });
+
+  // AI Assistant Chat events
+  elements.aiChatToggle.addEventListener("click", toggleAiChat);
+  elements.aiChatCloseBtn.addEventListener("click", toggleAiChat);
+  elements.aiChatForm.addEventListener("submit", handleAiSubmit);
 
   // Copy Promo Code Button
   if (elements.copyPromoBtn) {
@@ -833,12 +1267,27 @@ function setupEventListeners() {
     });
   }
 
+  // Back to Top button scroll listener
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 350) {
+      elements.backToTopBtn.classList.add("visible");
+    } else {
+      elements.backToTopBtn.classList.remove("visible");
+    }
+  });
+
+  elements.backToTopBtn.addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
   // Escape key closes modals and cart drawer
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
       closeCartDrawer();
       closeQuickView();
       closeCheckout();
+      closeCompareModal();
+      if (elements.aiChatWindow.classList.contains("open")) toggleAiChat();
     }
   });
 }
